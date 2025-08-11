@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <!-- Use the viewport meta tag so the layout adapts to iPhone and other mobile screens -->
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Move‑Out &amp; Refinance Tracker (Mobile)</title>
+  <style>
+    /*
+      Mobile‑friendly Move‑Out & Refinance Tracker
+
+      This page is designed to work on both desktop and mobile devices.  The layout
+      uses responsive grids that collapse down to a single column on small
+      screens.  A Google sign‑in button is provided to sync your data to a
+      single JSON file in your Google Drive so that progress can be shared
+      across devices.  If you do not sign in, the app will fall back to
+      localStorage only.
+    */
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif;
+      margin: 0;
+      background-color: #0f172a;
+      color: #e2e8f0;
+      padding: 16px;
+    }
+    a { color: #38bdf8; }
+    h1, h2, h3 { margin-top: 0; }
+    .container { max-width: 1280px; margin: 0 auto; }
+    .btn {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn:hover { background-color: #334155; }
+    .btn-danger {
+      background-color: #7f1d1d;
+      border-color: #991b1b;
+    }
+    .btn-danger:hover { background-color: #991b1b; }
+    .card {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .progress-bar {
+      background-color: #334155;
+      border-radius: 9999px;
+      height: 8px;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      background-color: #0ea5e9;
+      height: 100%;
+      width: 0;
+      border-radius: 9999px;
+      transition: width 0.5s;
+    }
+    .stage-tracker {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stage-pill {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #334155;
+      background-color: #1e293b;
+      border-radius: 12px;
+      padding: 10px 16px;
+    }
+    .stage-pill.done .num {
+      background-color: #14b8a6;
+    }
+    .stage-pill .num {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 9999px;
+      background-color: #334155;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 6px 4px;
+    }
+    th {
+      text-align: left;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+    tr + tr {
+      border-top: 1px solid #334155;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+      background-color: #0f172a;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 4px 6px;
+      width: 100%;
+    }
+    textarea { resize: vertical; }
+    .actions { display: flex; align-items: center; gap: 8px; }
+    .small-text { font-size: 12px; color: #94a3b8; }
+    .hidden { display: none; }
+    .header-controls button, .header-controls label { margin-left: 8px; }
+
+    /* Mobile adjustments */
+    @media (max-width: 600px) {
+      .stage-tracker {
+        grid-template-columns: 1fr;
+      }
+      .grid-2, .grid-3 {
+        grid-template-columns: 1fr;
+      }
+      .card-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+    }
+  </style>
+<script type="text/javascript" nonce="f35c7beb0eaf4867ae041045593" src="//local.adguard.org?ts=1754940102625&amp;type=content-script&amp;dmn=files09.oaiusercontent.com&amp;url=https%3A%2F%2Ffiles09.oaiusercontent.com%2Ffile-Bto2K5T7QVodWetmuLvMLp%3Fse%3D2025-08-11T19%253A27%253A32Z%26sp%3Dr%26sv%3D2024-08-04%26sr%3Db%26rscc%3Dmax-age%253D299%252C%2520immutable%252C%2520private%26rscd%3Dattachment%253B%2520filename%253Dindex_mobile.html%26sig%3DJKPrkgModvw9XC5skBbPnhkPc2VgRfzYuMBjLKZ2LcM%253D&amp;app=chrome.exe&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1&amp;stealth=1&amp;st-dnt"></script><script type="text/javascript" nonce="f35c7beb0eaf4867ae041045593" src="//local.adguard.org?ts=1754940102625&amp;name=AdGuard%20Extra&amp;name=AdGuard%20Popup%20Blocker&amp;type=user-script"></script></head>
+<body>
+  <div class="container" id="appContainer">
+    <header>
+      <h1>Move‑Out &amp; Refinance Tracker</h1>
+      <div class="small-text" id="targetMoveOutDate">Target move‑out: </div>
+      <div class="header-controls" style="margin-top: 8px; display:flex; flex-wrap: wrap; gap: 8px;">
+        <button class="btn" id="downloadJsonBtn">Export Data</button>
+        <button class="btn" id="copyJsonBtn">Copy Data</button>
+        <button class="btn" id="generateShareBtn">Generate Share Text</button>
+        <label class="btn" style="margin: 0;">
+          Import Data
+          <input accept="application/json" id="importJsonInput" style="display:none;" type="file"/>
+        </label>
+        <button class="btn" id="resetBtn">Reset</button>
+        <!-- Google sign‑in/out will live here -->
+        <button class="btn" id="signInBtn">Sign in with Google</button>
+        <button class="btn hidden" id="signOutBtn">Sign out</button>
+      </div>
+    </header>
+    <!-- Share Snapshot Container -->
+    <div class="card hidden" id="shareContainer">
+      <div class="card-header">
+        <h3>Shareable Snapshot (Markdown)</h3>
+        <button class="btn" id="copyShareBtn">Copy</button>
+      </div>
+      <textarea id="shareText" rows="6"></textarea>
+    </div>
+    <!-- Stage tracker -->
+    <div class="stage-tracker" id="stageTracker"></div>
+    <!-- Top KPI cards -->
+    <div class="grid-2">
+      <div class="card" id="creditCard">
+        <div class="card-header">
+          <h3>Credit Utilization</h3>
+          <span id="creditUtilValue"></span>
+        </div>
+        <div class="small-text" id="creditHint"></div>
+        <div class="progress-bar"><div class="fill" id="creditProgress"></div></div>
+      </div>
+      <div class="card" id="refiCard">
+        <div class="card-header">
+          <h3>Mazda Refinance Readiness</h3>
+          <span id="refiReadyValue"></span>
+        </div>
+        <div class="small-text" id="refiHint"></div>
+        <div class="progress-bar"><div class="fill" id="refiProgress"></div></div>
+      </div>
+    </div>
+    <!-- Main content -->
+    <div class="grid-2">
+      <!-- Column 1: Revolving Debts -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Revolving Debts</h3>
+          <span id="overallUtilValue"></span>
+        </div>
+        <div class="small-text">
+          <label><input id="excludeZeroLimit" type="checkbox"/> Exclude charge/zero‑limit accounts</label>
+        </div>
+        <div style="overflow-x:auto;">
+          <table id="debtsTable">
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th>Balance</th>
+                <th>Limit</th>
+                <th>Util%</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="debtsBody"></tbody>
+          </table>
+        </div>
+        <div class="small-text" style="margin-top: 8px;">
+          <div class="progress-bar" style="margin-bottom: 4px;"><div class="fill" id="overallUtilProgress"></div></div>
+          <div id="overallUtilHint"></div>
+        </div>
+        <div class="actions" style="margin-top: 12px;">
+          <button class="btn" id="addDebtBtn">+ Add Account</button>
+        </div>
+      </div>
+      <!-- Column 2: Move-Out Fund -->
+      <div class="card">
+        <div class="card-header"><h3>Move‑Out Fund</h3></div>
+        <div class="grid-2" style="gap: 12px;">
+          <label>
+            <div class="small-text">Savings Now</div>
+            <input id="moveSavings" type="number"/>
+          </label>
+          <label>
+            <div class="small-text">Target Cost</div>
+            <input id="moveTargetCost" type="number"/>
+          </label>
+          <label>
+            <div class="small-text">Target Date</div>
+            <input id="moveTargetDate" type="date"/>
+          </label>
+        </div>
+        <div style="margin-top: 8px;">
+          <div class="progress-bar"><div class="fill" id="moveProgress"></div></div>
+          <div class="small-text" id="moveHint"></div>
+        </div>
+      </div>
+    </div>
+    <!-- M2 Fund (spans two columns) -->
+    <div class="grid-3">
+      <div class="card" style="grid-column: span 2;">
+        <div class="card-header"><h3>F87 M2 Fund</h3></div>
+        <div class="grid-2" style="gap: 12px;">
+          <label>
+            <div class="small-text">Saved Now</div>
+            <input id="m2Saved" type="number"/>
+          </label>
+          <label>
+            <div class="small-text">Target Down Payment</div>
+            <input id="m2Target" type="number"/>
+          </label>
+        </div>
+        <div style="margin-top: 8px;">
+          <div class="progress-bar"><div class="fill" id="m2Progress"></div></div>
+          <div class="small-text" id="m2Hint"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Debt payment logs -->
+    <div class="card" id="debtPaymentsCard">
+      <div class="card-header"><h3>Debt Payment Logs</h3></div>
+      <div style="overflow-x:auto;">
+        <table id="debtPaymentLogsTable">
+          <thead>
+            <tr>
+              <th>Account</th>
+              <th>Amount Paid</th>
+              <th>Payment Date</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="debtPaymentLogsBody"></tbody>
+        </table>
+      </div>
+      <div class="actions" style="margin-top:12px;">
+        <button class="btn" id="addDebtPaymentLogBtn">+ Add Payment</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function() {
+      'use strict';
+      /*
+        The mobile version preserves all functionality from the desktop version
+        while adding optional Google Drive sync.  When signed in, the app will
+        attempt to load a file named `refi_tracker_data.json` from your Drive.
+        If not found, a new file will be created.  Whenever state is saved
+        locally, it will also push updates to Drive.  Signing out stops
+        syncing but leaves localStorage unaffected.
+      */
+
+      // ====== Config: insert your own Google OAuth client ID here ======
+      const GOOGLE_CLIENT_ID = '256356423892-c3oiggj90pctp3vegmspqk2n2k5fsvcu.apps.googleusercontent.com';
+      // The name of the file in Google Drive used to persist data
+      const DRIVE_FILE_NAME = 'refi_tracker_data.json';
+      let driveFileId = null;
+      let googleAuthInstance = null;
+
+      // Default state (same shape as desktop version)
+      const DEFAULT_STATE = {
+        debts: [
+          { id: 1, name: 'Capital One', balance: 1854, limit: 2000, apr: 25.9 },
+          { id: 2, name: 'Amazon CC', balance: 2037, limit: 2200, apr: 24.5 },
+          { id: 3, name: 'Mercury', balance: 2087, limit: 2200, apr: 27.4 },
+          { id: 4, name: 'AMEX (charge)', balance: 1099, limit: 0, apr: 0 },
+          { id: 5, name: 'PayPal Credit', balance: 1044, limit: 0, apr: 0 },
+        ],
+        treatChargeCardsAsZeroLimit: true,
+        moveOut: {
+          savingsNow: 1500,
+          targetCost: 8000,
+          targetDateISO: '2026-09-15',
+        },
+        mazda: {
+          balance: 41854.37,
+          aprNow: 16,
+          expectedAprAfterRefi: 7.5,
+          status: 'not_started',
+          onTimeMonthsAtCurrentUtil: 0,
+        },
+        m2: {
+          savingsNow: 0,
+          targetDownPayment: 12000,
+        },
+        notes: '',
+        debtPayments: [],
+      };
+
+      const STORAGE_KEY = 'progress-portable-v1';
+      let state;
+      function loadStateFromLocal() {
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            state = JSON.parse(stored);
+          } else {
+            state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+          }
+        } catch (e) {
+          state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+        }
+        if (!state || !Array.isArray(state.debts)) {
+          state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+        }
+      }
+      function saveStateToLocal() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch {}
+      }
+      // Save state both locally and to Drive (if logged in)
+      function saveState() {
+        saveStateToLocal();
+        if (driveFileId) {
+          saveStateToDrive().catch((err) => {
+            console.error('Drive save error', err);
+          });
+        }
+      }
+
+      // Helpers
+      function formatCurrency(n) {
+        const v = Number.isFinite(Number(n)) ? Number(n) : 0;
+        return v.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+      }
+      function clamp(v, min = 0, max = 1) {
+        return Math.max(min, Math.min(max, Number.isFinite(v) ? v : 0));
+      }
+
+      function computeMetrics() {
+        const relevantDebts = state.debts.filter((d) =>
+          state.treatChargeCardsAsZeroLimit ? Number(d.limit) > 0 : true
+        );
+        const totalBalances = relevantDebts.reduce((a, d) => a + (Number(d.balance) || 0), 0);
+        const totalLimits = relevantDebts.reduce((a, d) => a + (Number(d.limit) || 0), 0);
+        const utilPct = totalLimits > 0 ? (totalBalances / totalLimits) * 100 : 0;
+        const utilProgress = clamp((100 - utilPct) / (100 - 30));
+        const refiReadiness = utilProgress;
+        const moveProgress = clamp(Number(state.moveOut.savingsNow) / (Number(state.moveOut.targetCost) || 1));
+        const m2Progress = clamp(Number(state.m2.savingsNow) / (Number(state.m2.targetDownPayment) || 1));
+        return { totalBalances, totalLimits, utilPct, utilProgress, refiReadiness, moveProgress, m2Progress };
+      }
+
+      function buildShareText() {
+        const metrics = computeMetrics();
+        const lines = [];
+        lines.push(`# Move‑Out & Refinance Tracker — Snapshot`);
+        lines.push(`Date: ${new Date().toLocaleString()}`);
+        lines.push('');
+        lines.push(`**Stage 1 – Credit Utilization:** ${metrics.utilPct.toFixed(0)}% (target ≤ 30%)`);
+        const stage2Share = metrics.refiReadiness >= 1 ? 'Refinance ready' : `${(metrics.refiReadiness * 100).toFixed(0)}%`;
+        lines.push(`**Stage 2 – Mazda Refinance:** ${stage2Share}`);
+        lines.push(`**Stage 3 – Move‑Out Fund:** ${state.moveOut.savingsNow.toLocaleString()} / ${state.moveOut.targetCost.toLocaleString()} (${Math.round(metrics.moveProgress * 100)}%)`);
+        lines.push('');
+        lines.push(`## Revolving Debts (Balances ${formatCurrency(metrics.totalBalances)} / Limits ${formatCurrency(metrics.totalLimits)})`);
+        state.debts.forEach((d) => {
+          lines.push(`- ${d.name}: bal $${Number(d.balance || 0).toFixed(0)} | lim ${Number(d.limit || 0) > 0 ? `$${Number(d.limit).toFixed(0)}` : '—'} | APR ${Number(d.apr || 0)}%`);
+        });
+        lines.push('');
+        lines.push('## Debt Payment Logs');
+        (state.debtPayments || []).slice().sort((a,b)=>{
+          const da=a.date||''; const db=b.date||'';
+          if(da&&db&&da!==db) return db.localeCompare(da);
+          const ca=a.createdAt||''; const cb=b.createdAt||'';
+          if(ca!==cb) return cb.localeCompare(ca);
+          return (Number(b.id||0))-(Number(a.id||0));
+        }).forEach(p=>{
+          const acc=(state.debts||[]).find(d=>String(d.id)===String(p.accountId));
+          const name=acc?acc.name:'(no account)';
+          lines.push(`- ${name}: $${Number(p.amount||0).toFixed(2)} on ${p.date||'(no date)'}`);
+        });
+        lines.push('');
+        lines.push('---');
+        lines.push('Generated by the Progress App (mobile)');
+        return lines.join('\n');
+      }
+
+      // Render UI
+      function render() {
+        document.getElementById('targetMoveOutDate').textContent = `Target move‑out: ${new Date(state.moveOut.targetDateISO).toLocaleDateString()}`;
+        const metrics = computeMetrics();
+        const stage1Done = metrics.utilPct <= 30;
+        const stage2Done = metrics.refiReadiness >= 1;
+        const stage3Done = Number(state.moveOut.savingsNow) >= Number(state.moveOut.targetCost);
+        // Stage tracker
+        const stageTracker = document.getElementById('stageTracker');
+        stageTracker.innerHTML = '';
+        const stages = [
+          {
+            title: 'Credit',
+            subtitle: stage1Done ? '≤ 30% util achieved' : `Current util: ${metrics.utilPct.toFixed(0)}% → target ≤ 30%`,
+            done: stage1Done,
+            progressVal: metrics.utilProgress,
+          },
+          {
+            title: 'Mazda Refinance',
+            subtitle: stage2Done ? 'Refinance ready' : `Readiness: ${(metrics.refiReadiness * 100).toFixed(0)}%`,
+            done: stage2Done,
+            progressVal: metrics.refiReadiness,
+          },
+          {
+            title: 'Move‑out fund',
+            subtitle: stage3Done ? 'Fully funded' : `${formatCurrency(state.moveOut.savingsNow)} / ${formatCurrency(state.moveOut.targetCost)}`,
+            done: stage3Done,
+            progressVal: metrics.moveProgress,
+          },
+        ];
+        stages.forEach((stg) => {
+          const pill = document.createElement('div');
+          pill.className = 'stage-pill';
+          if (stg.done) pill.classList.add('done');
+          const num = document.createElement('div');
+          num.className = 'num';
+          num.textContent = stg.done ? '✓' : stages.indexOf(stg) + 1;
+          pill.appendChild(num);
+          const textCont = document.createElement('div');
+          const title = document.createElement('div');
+          title.textContent = stg.title;
+          textCont.appendChild(title);
+          const sub = document.createElement('div');
+          sub.className = 'small-text';
+          sub.textContent = stg.subtitle;
+          textCont.appendChild(sub);
+          pill.appendChild(textCont);
+          // Glow after threshold (as in desktop version)
+          const progressThreshold = 0.15;
+          const progressVal = stg.progressVal;
+          if (progressVal > progressThreshold) {
+            const norm = Math.min(1, (progressVal - progressThreshold) / (1 - progressThreshold));
+            const opacity = norm * norm;
+            const blur = 12 * opacity;
+            const spread = 4 * opacity;
+            pill.style.boxShadow = `0 0 ${blur}px ${spread}px rgba(20, 184, 166, ${opacity})`;
+            const borderAlpha = 0.2 + 0.8 * opacity;
+            pill.style.borderColor = `rgba(20, 184, 166, ${borderAlpha})`;
+            pill.style.backgroundColor = opacity > 0.8 ? '#064e3b' : opacity > 0.5 ? '#0a6451' : '#1e293b';
+          }
+          stageTracker.appendChild(pill);
+        });
+        // Credit card
+        document.getElementById('creditUtilValue').textContent = `${metrics.utilPct.toFixed(0)}%`;
+        document.getElementById('creditProgress').style.width = `${Math.round(metrics.utilProgress * 100)}%`;
+        document.getElementById('creditHint').textContent = `Balances ${formatCurrency(metrics.totalBalances)} / Limits ${formatCurrency(metrics.totalLimits)} — target ≤ 30%`;
+        // Refi card
+        document.getElementById('refiReadyValue').textContent = `${Math.round(metrics.refiReadiness * 100)}%`;
+        document.getElementById('refiProgress').style.width = `${Math.round(metrics.refiReadiness * 100)}%`;
+        const refiHintEl = document.getElementById('refiHint');
+        if (metrics.utilPct <= 30) {
+          refiHintEl.textContent = 'Excellent: start refinance shopping now.';
+        } else if (metrics.utilPct <= 50) {
+          refiHintEl.textContent = 'Good: 1–2 more cycles of on‑time payments helps.';
+        } else {
+          refiHintEl.textContent = 'Drop util under 50% to unlock better rates.';
+        }
+        // Revolving debts
+        const tbody = document.getElementById('debtsBody');
+        tbody.innerHTML = '';
+        state.debts.forEach((d) => {
+          const tr = document.createElement('tr');
+          // name
+          let td = document.createElement('td');
+          const nameInput = document.createElement('input');
+          nameInput.type = 'text';
+          nameInput.value = d.name;
+          nameInput.onchange = (e) => {
+            d.name = e.target.value;
+            saveState();
+            render();
+          };
+          td.appendChild(nameInput);
+          tr.appendChild(td);
+          // balance
+          td = document.createElement('td');
+          const balInput = document.createElement('input');
+          balInput.type = 'number';
+          balInput.value = d.balance;
+          balInput.onchange = (e) => {
+            d.balance = Number(e.target.value) || 0;
+            saveState();
+            render();
+          };
+          td.appendChild(balInput);
+          tr.appendChild(td);
+          // limit
+          td = document.createElement('td');
+          const limInput = document.createElement('input');
+          limInput.type = 'number';
+          limInput.value = d.limit;
+          limInput.onchange = (e) => {
+            d.limit = Number(e.target.value) || 0;
+            saveState();
+            render();
+          };
+          td.appendChild(limInput);
+          tr.appendChild(td);
+          // util %
+          td = document.createElement('td');
+          const utilVal = d.limit > 0 ? ((d.balance / d.limit) * 100).toFixed(0) : '—';
+          td.textContent = d.limit > 0 ? `${utilVal}%` : '—';
+          td.className = 'small-text';
+          tr.appendChild(td);
+          // actions
+          td = document.createElement('td');
+          const removeBtn = document.createElement('button');
+          removeBtn.className = 'btn btn-danger';
+          removeBtn.textContent = 'Remove';
+          removeBtn.onclick = () => {
+            state.debts = state.debts.filter((x) => x.id !== d.id);
+            saveState();
+            render();
+          };
+          const zeroBtn = document.createElement('button');
+          zeroBtn.className = 'btn';
+          zeroBtn.textContent = 'Set 0';
+          zeroBtn.onclick = () => {
+            d.balance = 0;
+            saveState();
+            render();
+          };
+          const actionsDiv = document.createElement('div');
+          actionsDiv.className = 'actions';
+          actionsDiv.appendChild(removeBtn);
+          actionsDiv.appendChild(zeroBtn);
+          td.appendChild(actionsDiv);
+          tr.appendChild(td);
+          tbody.appendChild(tr);
+        });
+        // Overall util bar
+        document.getElementById('overallUtilValue').textContent = `${metrics.utilPct.toFixed(0)}%`;
+        document.getElementById('overallUtilProgress').style.width = `${Math.round(metrics.utilProgress * 100)}%`;
+        document.getElementById('overallUtilHint').textContent = `Balances ${formatCurrency(metrics.totalBalances)} / Limits ${formatCurrency(metrics.totalLimits)}`;
+        // Move‑Out values
+        document.getElementById('moveSavings').value = state.moveOut.savingsNow;
+        document.getElementById('moveTargetCost').value = state.moveOut.targetCost;
+        document.getElementById('moveTargetDate').value = state.moveOut.targetDateISO;
+        document.getElementById('moveProgress').style.width = `${Math.round(metrics.moveProgress * 100)}%`;
+        document.getElementById('moveHint').textContent = `${formatCurrency(state.moveOut.savingsNow)} / ${formatCurrency(state.moveOut.targetCost)}`;
+        // M2 values
+        document.getElementById('m2Saved').value = state.m2.savingsNow;
+        document.getElementById('m2Target').value = state.m2.targetDownPayment;
+        document.getElementById('m2Progress').style.width = `${Math.round(metrics.m2Progress * 100)}%`;
+        document.getElementById('m2Hint').textContent = `${formatCurrency(state.m2.savingsNow)} / ${formatCurrency(state.m2.targetDownPayment)}`;
+        // Exclude zero limit
+        document.getElementById('excludeZeroLimit').checked = state.treatChargeCardsAsZeroLimit;
+        // Payment logs
+        paymentsRender();
+      }
+
+      // Bind UI events
+      function bindEvents() {
+        document.getElementById('addDebtBtn').onclick = () => {
+          const nextId = state.debts.length > 0 ? Math.max(...state.debts.map((d) => d.id)) + 1 : 1;
+          state.debts.push({ id: nextId, name: 'New Card', balance: 0, limit: 0, apr: 0 });
+          saveState();
+          render();
+        };
+        document.getElementById('excludeZeroLimit').onchange = (e) => {
+          state.treatChargeCardsAsZeroLimit = e.target.checked;
+          saveState();
+          render();
+        };
+        document.getElementById('moveSavings').onchange = (e) => {
+          state.moveOut.savingsNow = Number(e.target.value) || 0;
+          saveState();
+          render();
+        };
+        document.getElementById('moveTargetCost').onchange = (e) => {
+          state.moveOut.targetCost = Number(e.target.value) || 0;
+          saveState();
+          render();
+        };
+        document.getElementById('moveTargetDate').onchange = (e) => {
+          state.moveOut.targetDateISO = e.target.value;
+          saveState();
+          render();
+        };
+        document.getElementById('m2Saved').onchange = (e) => {
+          state.m2.savingsNow = Number(e.target.value) || 0;
+          saveState();
+          render();
+        };
+        document.getElementById('m2Target').onchange = (e) => {
+          state.m2.targetDownPayment = Number(e.target.value) || 0;
+          saveState();
+          render();
+        };
+        document.getElementById('downloadJsonBtn').onclick = () => {
+          const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'progress-data.json';
+          a.click();
+          URL.revokeObjectURL(url);
+        };
+        document.getElementById('copyJsonBtn').onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(JSON.stringify(state));
+            alert('Data copied to clipboard');
+          } catch { alert('Copy failed'); }
+        };
+        document.getElementById('generateShareBtn').onclick = () => {
+          const shareText = buildShareText();
+          document.getElementById('shareText').value = shareText;
+          document.getElementById('shareContainer').classList.remove('hidden');
+          setTimeout(() => {
+            document.getElementById('shareText').select();
+          }, 0);
+        };
+        document.getElementById('copyShareBtn').onclick = async () => {
+          const shareText = document.getElementById('shareText').value;
+          try {
+            await navigator.clipboard.writeText(shareText);
+            alert('Share text copied!');
+          } catch { alert('Copy failed'); }
+        };
+        document.getElementById('importJsonInput').onchange = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              try {
+                const data = JSON.parse(ev.target.result);
+                state = data;
+                saveState();
+                render();
+              } catch { alert('Invalid JSON file'); }
+            };
+            reader.readAsText(file);
+          }
+        };
+        document.getElementById('resetBtn').onclick = () => {
+          if (confirm('Reset all data? This cannot be undone.')) {
+            state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+            saveState();
+            render();
+          }
+        };
+        // Payment logs bind
+        document.getElementById('addDebtPaymentLogBtn').onclick = () => {
+          if (!Array.isArray(state.debtPayments)) state.debtPayments = [];
+          const nextId = state.debtPayments.reduce((m,p)=>Math.max(m, Number(p.id)||0), 0) + 1;
+          const nowISO = new Date().toISOString();
+          state.debtPayments.push({ id: nextId, createdAt: nowISO, accountId: '', amount: 0, date: '' });
+          saveState();
+          paymentsRender();
+        };
+        // Google sign‑in/out
+        document.getElementById('signInBtn').onclick = () => { signIn(); };
+        document.getElementById('signOutBtn').onclick = () => { signOut(); };
+      }
+
+      // Payment logs render
+      function paymentsRender() {
+        const body = document.getElementById('debtPaymentLogsBody');
+        if (!body) return;
+        body.innerHTML = '';
+        const rows = (state.debtPayments || []).slice().sort((a,b) => {
+          const da=a.date||''; const db=b.date||'';
+          if (da && db && da !== db) return db.localeCompare(da);
+          const ca=a.createdAt||''; const cb=b.createdAt||'';
+          if (ca !== cb) return cb.localeCompare(ca);
+          return (Number(b.id||0)) - (Number(a.id||0));
+        });
+        rows.forEach((p) => {
+          const tr = document.createElement('tr');
+          const id = p.id;
+          // Account select
+          let td = document.createElement('td');
+          const sel = document.createElement('select');
+          const optBlank = document.createElement('option');
+          optBlank.value = '';
+          optBlank.textContent = '— Select —';
+          sel.appendChild(optBlank);
+          (state.debts || []).forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = String(d.id);
+            opt.textContent = d.name || ('Account ' + d.id);
+            sel.appendChild(opt);
+          });
+          sel.value = (p.accountId !== undefined && p.accountId !== null) ? String(p.accountId) : '';
+          sel.onchange = (e) => {
+            const idx = (state.debtPayments||[]).findIndex(x => String(x.id) === String(id));
+            if (idx >= 0) {
+              const val = e.target.value;
+              state.debtPayments[idx].accountId = val === '' ? '' : Number(val);
+              saveState();
+            }
+          };
+          td.appendChild(sel);
+          tr.appendChild(td);
+          // Amount
+          td = document.createElement('td');
+          const amt = document.createElement('input');
+          amt.type = 'number';
+          amt.step = '0.01';
+          amt.value = p.amount || 0;
+          amt.onchange = (e) => {
+            const idx = (state.debtPayments||[]).findIndex(x => String(x.id) === String(id));
+            if (idx >= 0) {
+              state.debtPayments[idx].amount = Number(e.target.value) || 0;
+              saveState();
+            }
+          };
+          td.appendChild(amt);
+          tr.appendChild(td);
+          // Date
+          td = document.createElement('td');
+          const date = document.createElement('input');
+          date.type = 'date';
+          date.value = p.date || '';
+          date.oninput = (e) => {
+            const idx = (state.debtPayments||[]).findIndex(x => String(x.id) === String(id));
+            if (idx >= 0) {
+              state.debtPayments[idx].date = e.target.value || '';
+              saveState();
+            }
+          };
+          date.onblur = () => { paymentsRender(); };
+          td.appendChild(date);
+          tr.appendChild(td);
+          // Remove
+          td = document.createElement('td');
+          const del = document.createElement('button');
+          del.className = 'btn btn-danger';
+          del.textContent = 'Remove';
+          del.onclick = () => {
+            const idx = (state.debtPayments||[]).findIndex(x => String(x.id) === String(id));
+            if (idx >= 0) {
+              state.debtPayments.splice(idx,1);
+              saveState();
+              paymentsRender();
+            }
+          };
+          td.appendChild(del);
+          tr.appendChild(td);
+          body.appendChild(tr);
+        });
+      }
+
+      // Google API integration
+      async function initGoogleApi() {
+        return new Promise((resolve, reject) => {
+          if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.startsWith('YOUR_')) {
+            console.warn('Google client ID not set.  Sign‑in disabled.');
+            resolve();
+            return;
+          }
+          // Load the Google API script
+          const script = document.createElement('script');
+          script.src = 'https://apis.google.com/js/api.js';
+          script.onload = () => {
+            gapi.load('client:auth2', async () => {
+              try {
+                await gapi.client.init({
+                clientId: GOOGLE_CLIENT_ID,
+                scope: 'https://www.googleapis.com/auth/drive.file',
+                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+              });
+                googleAuthInstance = gapi.auth2.getAuthInstance();
+                // Listen for sign‑in state changes
+                googleAuthInstance.isSignedIn.listen(updateSigninStatus);
+                updateSigninStatus(googleAuthInstance.isSignedIn.get());
+                resolve();
+              } catch (e) {
+                console.error('Google API init error', e);
+                reject(e);
+              }
+            });
+          };
+          script.onerror = () => reject(new Error('Failed to load Google API script'));
+          document.body.appendChild(script);
+        });
+      }
+      function updateSigninStatus(isSignedIn) {
+        const signInBtn = document.getElementById('signInBtn');
+        const signOutBtn = document.getElementById('signOutBtn');
+        if (isSignedIn) {
+          signInBtn.classList.add('hidden');
+          signOutBtn.classList.remove('hidden');
+          // After sign‑in, load data from Drive
+          loadStateFromDrive().catch((err) => {
+            console.error('Load from Drive failed', err);
+          });
+        } else {
+          signInBtn.classList.remove('hidden');
+          signOutBtn.classList.add('hidden');
+          // When signed out, just render local state
+          loadStateFromLocal();
+          render();
+        }
+      }
+      async function signIn() {
+        if (!googleAuthInstance) return;
+        try {
+          await googleAuthInstance.signIn();
+        } catch (e) {
+          console.error('Google sign‑in failed', e);
+        }
+      }
+      async function signOut() {
+        if (!googleAuthInstance) return;
+        try {
+          await googleAuthInstance.signOut();
+        } catch (e) {
+          console.error('Google sign‑out failed', e);
+        }
+      }
+      async function loadStateFromDrive() {
+        // Search for our data file
+        const resp = await gapi.client.drive.files.list({ q: `name='${DRIVE_FILE_NAME}' and trashed=false`, fields: 'files(id, name)' });
+        const files = resp.result.files;
+        if (files && files.length > 0) {
+          driveFileId = files[0].id;
+          // Read contents
+          const content = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
+          try {
+            state = JSON.parse(content.body);
+          } catch {
+            state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+          }
+        } else {
+          // Create a new file
+          const fileMetadata = { name: DRIVE_FILE_NAME, mimeType: 'application/json' };
+          const media = { mimeType: 'application/json', body: JSON.stringify(DEFAULT_STATE) };
+          const createResp = await gapi.client.drive.files.create({ resource: fileMetadata, media: media, fields: 'id' });
+          driveFileId = createResp.result.id;
+          state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+          // Push initial state
+          await saveStateToDrive();
+        }
+        saveStateToLocal();
+        render();
+      }
+      async function saveStateToDrive() {
+        if (!driveFileId) return;
+        const fileContent = JSON.stringify(state);
+        const media = { mimeType: 'application/json', body: fileContent };
+        await gapi.client.drive.files.update({ fileId: driveFileId, media: media });
+      }
+
+      // Initialize
+      loadStateFromLocal();
+      bindEvents();
+      render();
+      // Setup Google API if client ID is provided
+      initGoogleApi().catch((err) => {
+        console.error('Google API init failed', err);
+      });
+    })();
+  </script>
+</body>
+</html>
