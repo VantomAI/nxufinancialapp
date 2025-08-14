@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <!-- Use the viewport meta tag so the layout adapts to iPhone and other mobile screens -->
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Move‑Out &amp; Refinance Tracker (Mobile)</title>
+  <style>
+    /*
+      Mobile‑friendly Move‑Out & Refinance Tracker
+
+      This page is designed to work on both desktop and mobile devices.  The layout
+      uses responsive grids that collapse down to a single column on small
+      screens.  A Google sign‑in button is provided to sync your data to a
+      single JSON file in your Google Drive so that progress can be shared
+      across devices.  If you do not sign in, the app will fall back to
+      localStorage only.
+    */
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif;
+      margin: 0;
+      background-color: #0f172a;
+      color: #e2e8f0;
+      padding: 16px;
+    }
+    a { color: #38bdf8; }
+    h1, h2, h3 { margin-top: 0; }
+    .container { max-width: 1280px; margin: 0 auto; }
+    .btn {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn:hover { background-color: #334155; }
+    .btn-danger {
+      background-color: #7f1d1d;
+      border-color: #991b1b;
+    }
+    .btn-danger:hover { background-color: #991b1b; }
+    .card {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .progress-bar {
+      background-color: #334155;
+      border-radius: 9999px;
+      height: 8px;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      background-color: #0ea5e9;
+      height: 100%;
+      width: 0;
+      border-radius: 9999px;
+      transition: width 0.5s;
+    }
+    .stage-tracker {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stage-pill {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #334155;
+      background-color: #1e293b;
+      border-radius: 12px;
+      padding: 10px 16px;
+    }
+    .stage-pill.done .num {
+      background-color: #14b8a6;
+    }
+    .stage-pill .num {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 9999px;
+      background-color: #334155;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 6px 4px;
+    }
+    th {
+      text-align: left;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+    tr + tr {
+      border-top: 1px solid #334155;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+      background-color: #0f172a;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 4px 6px;
+      width: 100%;
+    }
+    textarea { resize: vertical; }
+    .actions { display: flex; align-items: center; gap: 8px; }
+    .small-text { font-size: 12px; color: #94a3b8; }
+    .hidden { display: none; }
+    .header-controls button, .header-controls label { margin-left: 8px; }
+
+    /* Privacy overlay for unauthenticated users */
+    #privacyOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+    }
+    #privacyOverlay.hidden {
+      display: none;
+    }
+    #privacyOverlay .privacy-card {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      color: #e2e8f0;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 600px) {
+      .stage-tracker {
+        grid-template-columns: 1fr;
+      }
+      .grid-2, .grid-3 {
+        grid-template-columns: 1fr;
+      }
+      .card-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+    }
+  </style>
+  <!-- Load Supabase client library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="container" id="appContainer">
+    <header>
+      <h1>Move‑Out &amp; Refinance Tracker</h1>
+      <div class="small-text" id="targetMoveOutDate">Target move‑out: </div>
+      <div class="header-controls" style="margin-top: 8px; display:flex; flex-wrap: wrap; gap: 8px;">
+        <button class="btn" id="downloadJsonBtn">Export Data</button>
+        <button class="btn" id="copyJsonBtn">Copy Data</button>
+        <button class="btn" id="generateShareBtn">Generate Share Text</button>
+        <label class="btn" style="margin: 0;">
+          Import Data
+          <input accept="application/json" id="importJsonInput" style="display:none;" type="file"/>
+        </label>
+        <button class="btn" id="resetBtn">Reset</button>
+        <button class="btn" id="saveToCloudBtn">Save Data to Cloud</button>
+        <button class="btn" id="syncFromCloudBtn">Sync Data from Cloud</button>
+        <!-- Cloud status indicator: shows connection state to Supabase -->
+        <span id="cloudStatus" class="small-text" style="margin-left:8px;"></span>
+      </div>
+    </header>
+    <!-- Share Snapshot Container -->
+    <div class="card hidden" id="shareContainer">
+      <div class="card-header">
+        <h3>Shareable Snapshot (Markdown)</h3>
+        <button class="btn" id="copyShareBtn">Copy</button>
+      </div>
+      <textarea id="shareText" rows="6"></textarea>
+    </div>
+    <!-- Stage tracker -->
+    <div class="stage-tracker" id="stageTracker"></div>
+    <!-- Top KPI cards -->
+    <div class="grid-2">
+      <div class="card" id="creditCard">
+        <div class="card-header">
+          <h3>Credit Utilization</h3>
+          <span id="creditUtilValue"></span>
+        </div>
+        <div class="small-text" id="creditHint"></div>
+        <div class="progress-bar"><div class="fill" id="creditProgress"></div></div>
+      </div>
+      <div class="card" id="refiCard">
+        <div class="card-header">
+          <h3>Mazda Refinance Readiness</h3>
+          <span id="refiReadyValue"></span>
+        </div>
+        <div class="small-text" id="refiHint"></div>
+        <div class="progress-bar"><div class="fill" id="refiProgress"></div></div>
+      </div>
+    </div>
+    <!-- Main content -->
+    <div class="grid-2">
+      <!-- Column 1: Revolving Debts -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Revolving Debts</h3>
+          <span id="overallUtilValue"></span>
+        </div>
+        <div class="small-text">
+          <label><input id="excludeZeroLimit" type="checkbox"/> Exclude charge/zero‑limit accounts</label>
+        </div>
+        <div style="overflow-x:auto;">
+          <table id="debtsTable">
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th>Balance</th>
+                <th>Limit</th>
+                <th>Util%</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="debtsBody"></tbody>
+          </table>
+        </div>
+        <div class="small-text" style="margin-top: 8px;">
+          <div class="progress-bar" style="margin-bottom: 4px;"><div class="fill" id="overallUtilProgress"></div></div>
+          <div id="overallUtilHint"></div>
+        </div>
+        <div class="actions" style="margin-top: 12px;">
+          <button class="btn" id="addDebtBtn">+ Add Account</button>
+        </div>
+      </div>
+      <!-- Column 2: Move-Out Fund -->
+      <div class="card">
+        <div class="card-header"><h3>Move‑Out Fund</h3></div>
+        <div class="grid-2" style="gap: 12px;">
+          <label>
+            <div class="small-text">Savings Now</div>
+            <input id="moveSavings" type="number"/>
+          </label>
+          <label>
+            <div class="small-text">Target Cost</div>
+            <input id="moveTargetCost" type="number"/>
+          </label>
+          <label>
+            <div class="small-text">Target Date</div>
+            <input id="moveTargetDate" type="date"/>
+          </label>
+        </div>
+        <div style="margin-top: 8px;">
+          <div class="progress-bar"><div class="fill" id="moveProgress"></div></div>
+          <div class="small-text" id="moveHint"></div>
+        </div>
+      </div>
+    </div>
+    <!-- M2 Fund (spans two columns) -->
+    <div class="grid-3">
+      <div class="card" style="grid-column: span 2;">
+        <div class="card-header"><h3>F87 M2 Fund</h3></div>
+        <div class="grid-2" style="gap: 12px;">
+          <label>
+            <div class="small-text">Saved Now</div>
+            <input id="m2Saved" type="number"/>
+          </label>
+          <label>
+            <div class="small-text">Target Down Payment</div>
+            <input id="m2Target" type="number"/>
+          </label>
+        </div>
+        <div style="margin-top: 8px;">
+          <div class="progress-bar"><div class="fill" id="m2Progress"></div></div>
+          <div class="small-text" id="m2Hint"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Debt payment logs -->
+    <div class="card" id="debtPaymentsCard">
+      <div class="card-header"><h3>Debt Payment Logs</h3></div>
+      <div style="overflow-x:auto;">
+        <table id="debtPaymentLogsTable">
+          <thead>
+            <tr>
+              <th>Account</th>
+              <th>Amount Paid</th>
+              <th>Payment Date</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="debtPaymentLogsBody"></tbody>
+        </table>
+      </div>
+      <div class="actions" style="margin-top:12px;">
+        <button class="btn" id="addDebtPaymentLogBtn">+ Add Payment</button>
+      </div>
+    </div>
+  </div>
+  <!-- Privacy overlay: hidden until unauthenticated -->
+  <div id="privacyOverlay" class="hidden">
+    <div class="privacy-card">
+      <h2>Sign in to view your data</h2>
+      <button class="btn" id="overlaySignInBtn">Sign in with Google</button>
+    </div>
+  </div>
+  <script>
+    (function() {
+      'use strict';
+      
+      // Default state (blank values for first‑time initialization)
+      const DEFAULT_STATE = {
+        debts: [
+          { id: 1, name: 'Account 1', balance: 0, limit: 0, apr: 0 },
+          { id: 2, name: 'Account 2', balance: 0, limit: 0, apr: 0 },
+          { id: 3, name: 'Account 3', balance: 0, limit: 0, apr: 0 },
+          { id: 4, name: 'Account 4', balance: 0, limit: 0, apr: 0 },
+        ],
+        treatChargeCardsAsZeroLimit: true,
+        moveOut: {
+          savingsNow: 0,
+          targetCost: 0,
+          targetDateISO: new Date().toISOString().split('T')[0],
+        },
+        mazda: {
+          balance: 0,
+          aprNow: 0,
+          expectedAprAfterRefi: 0,
+          status: '',
+          onTimeMonthsAtCurrentUtil: 0,
+        },
+        m2: {
+          savingsNow: 0,
+          targetDownPayment: 0,
+        },
+        notes: '',
+        debtPayments: [],
+      };
+
+      const STORAGE_KEY = 'progress-portable-v1';
+      let state; // Internal state for this script's closure
+
+      // *** NEW FUNCTION: Central point for applying new state ***
+      function applyLoadedState(newState) {
+        state = newState;
+        window.state = state; // Keep global reference in sync for other scripts
+        saveStateToLocal();   // Persist the newly loaded state to the browser
+        render();             // Re-render the UI with the new state
+      }
+      window.applyLoadedState = applyLoadedState; // Expose to other scripts
+
+      function loadStateFromLocal() {
+        let loadedState;
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            loadedState = JSON.parse(stored);
+          } else {
+            loadedState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+          }
+        } catch (e) {
+          loadedState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+        }
+        if (!loadedState || !Array.isArray(loadedState.debts)) {
+          loadedState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+        }
+        // Use the new central function to apply the state
+        applyLoadedState(loadedState);
+      }
+      function saveStateToLocal() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch {}
+      }
+      function saveState() {
+        saveStateToLocal();
+      }
+      window.saveStateToLocal = saveStateToLocal;
+
+
+      // Helpers
+      function formatCurrency(n) {
+        const v = Number.isFinite(Number(n)) ? Number(n) : 0;
+        return v.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+      }
+      function clamp(v, min = 0, max = 1) {
+        return Math.max(min, Math.min(max, Number.isFinite(v) ? v : 0));
+      }
+
+      function computeMetrics() {
+        const relevantDebts = state.debts.filter((d) =>
+          state.treatChargeCardsAsZeroLimit ? Number(d.limit) > 0 : true
+        );
+        const totalBalances = relevantDebts.reduce((a, d) => a + (Number(d.balance) || 0), 0);
+        const totalLimits = relevantDebts.reduce((a, d) => a + (Number(d.limit) || 0), 0);
+        const utilPct = totalLimits > 0 ? (totalBalances / totalLimits) * 100 : 0;
+        const utilProgress = clamp((100 - utilPct) / (100 - 30));
+        const refiReadiness = utilProgress;
+        const moveProgress = clamp(Number(state.moveOut.savingsNow) / (Number(state.moveOut.targetCost) || 1));
+        const m2Progress = clamp(Number(state.m2.savingsNow) / (Number(state.m2.targetDownPayment) || 1));
+        return { totalBalances, totalLimits, utilPct, utilProgress, refiReadiness, moveProgress, m2Progress };
+      }
+
+      function buildShareText() {
+        const metrics = computeMetrics();
+        const lines = [];
+        lines.push(`# Move‑Out & Refinance Tracker — Snapshot`);
+        lines.push(`Date: ${new Date().toLocaleString()}`);
+        lines.push('');
+        lines.push(`**Stage 1 – Credit Utilization:** ${metrics.utilPct.toFixed(0)}% (target ≤ 30%)`);
+        const stage2Share = metrics.refiReadiness >= 1 ? 'Refinance ready' : `${(metrics.refiReadiness * 100).toFixed(0)}%`;
+        lines.push(`**Stage 2 – Mazda Refinance:** ${stage2Share}`);
+        lines.push(`**Stage 3 – Move‑Out Fund:** ${state.moveOut.savingsNow.toLocaleString()} / ${state.moveOut.targetCost.toLocaleString()} (${Math.round(metrics.moveProgress * 100)}%)`);
+        lines.push('');
+        lines.push(`## Revolving Debts (Balances ${formatCurrency(metrics.totalBalances)} / Limits ${formatCurrency(metrics.totalLimits)})`);
+        state.debts.forEach((d) => {
+          lines.push(`- ${d.name}: bal $${Number(d.balance || 0).toFixed(0)} | lim ${Number(d.limit || 0) > 0 ? `$${Number(d.limit).toFixed(0)}` : '—'} | APR ${Number(d.apr || 0)}%`);
+        });
+        lines.push('');
+        lines.push('## Debt Payment Logs');
+        (state.debtPayments || []).slice().sort((a,b)=>{
+          const da=a.date||''; const db=b.date||'';
+          if(da&&db&&da!==db) return db.localeCompare(da);
+          const ca=a.createdAt||''; const cb=b.createdAt||'';
+          if(ca!==cb) return cb.localeCompare(ca);
+          return (Number(b.id||0))-(Number(a.id||0));
+        }).forEach(p=>{
+          const acc=(state.debts||[]).find(d=>String(d.id)===String(p.accountId));
+          const name=acc?acc.name:'(no account)';
+          lines.push(`- ${name}: $${Number(p.amount||0).toFixed(2)} on ${p.date||'(no date)'}`);
+        });
+        lines.push('');
+        lines.push('---');
+        lines.push('Generated by the Progress App (mobile)');
+        return lines.join('\n');
+      }
+
+      // Render UI
+      function render() {
+        // Ensure state exists before rendering
+        if (!state) return;
+        document.getElementById('targetMoveOutDate').textContent = `Target move‑out: ${new Date(state.moveOut.targetDateISO).toLocaleDateString()}`;
+        const metrics = computeMetrics();
+        const stage1Done = metrics.utilPct <= 30;
+        const stage2Done = metrics.refiReadiness >= 1;
+        const stage3Done = Number(state.moveOut.savingsNow) >= Number(state.moveOut.targetCost);
+        // Stage tracker
+        const stageTracker = document.getElementById('stageTracker');
+        stageTracker.innerHTML = '';
+        const stages = [
+          {
+            title: 'Credit',
+            subtitle: stage1Done ? '≤ 30% util achieved' : `Current util: ${metrics.utilPct.toFixed(0)}% → target ≤ 30%`,
+            done: stage1Done,
+            progressVal: metrics.utilProgress,
+          },
+          {
+            title: 'Mazda Refinance',
+            subtitle: stage2Done ? 'Refinance ready' : `Readiness: ${(metrics.refiReadiness * 100).toFixed(0)}%`,
+            done: stage2Done,
+            progressVal: metrics.refiReadiness,
+          },
+          {
+            title: 'Move‑out fund',
+            subtitle: stage3Done ? 'Fully funded' : `${formatCurrency(state.moveOut.savingsNow)} / ${formatCurrency(state.moveOut.targetCost)}`,
+            done: stage3Done,
+            progressVal: metrics.moveProgress,
+          },
+        ];
+        stages.forEach((stg, index) => {
+          const pill = document.createElement('div');
+          pill.className = 'stage-pill';
+          if (stg.done) pill.classList.add('done');
+          const num = document.createElement('div');
+          num.className = 'num';
+          num.textContent = stg.done ? '✓' : index + 1;
+          pill.appendChild(num);
+          const textCont = document.createElement('div');
+          const title = document.createElement('div');
+          title.textContent = stg.title;
+          textCont.appendChild(title);
+          const sub = document.createElement('div');
+          sub.className = 'small-text';
+          sub.textContent = stg.subtitle;
+          textCont.appendChild(sub);
+          pill.appendChild(textCont);
+          stageTracker.appendChild(pill);
+        });
+        // Credit card
+        document.getElementById('creditUtilValue').textContent = `${metrics.utilPct.toFixed(0)}%`;
+        document.getElementById('creditProgress').style.width = `${Math.round(metrics.utilProgress * 100)}%`;
+        document.getElementById('creditHint').textContent = `Balances ${formatCurrency(metrics.totalBalances)} / Limits ${formatCurrency(metrics.totalLimits)} — target ≤ 30%`;
+        // Refi card
+        document.getElementById('refiReadyValue').textContent = `${Math.round(metrics.refiReadiness * 100)}%`;
+        document.getElementById('refiProgress').style.width = `${Math.round(metrics.refiReadiness * 100)}%`;
+        const refiHintEl = document.getElementById('refiHint');
+        if (metrics.utilPct <= 30) {
+          refiHintEl.textContent = 'Excellent: start refinance shopping now.';
+        } else if (metrics.utilPct <= 50) {
+          refiHintEl.textContent = 'Good: 1–2 more cycles of on‑time payments helps.';
+        } else {
+          refiHintEl.textContent = 'Drop util under 50% to unlock better rates.';
+        }
+        // Revolving debts
+        const tbody = document.getElementById('debtsBody');
+        tbody.innerHTML = '';
+        state.debts.forEach((d) => {
+          const tr = document.createElement('tr');
+          // name
+          let td = document.createElement('td');
+          const nameInput = document.createElement('input');
+          nameInput.type = 'text';
+          nameInput.value = d.name;
+          nameInput.onchange = (e) => {
+            d.name = e.target.value;
+            saveState();
+            render();
+          };
+          td.appendChild(nameInput);
+          tr.appendChild(td);
+          // balance
+          td = document.createElement('td');
+          const balInput = document.createElement('input');
+          balInput.type = 'number';
+          balInput.value = d.balance;
+          balInput.onchange = (e) => {
+            d.balance = Number(e.target.value) || 0;
+            saveState();
+            render();
+          };
+          td.appendChild(balInput);
+          tr.appendChild(td);
+          // limit
+          td = document.createElement('td');
+          const limInput = document.createElement('input');
+          limInput.type = 'number';
+          limInput.value = d.limit;
+          limInput.onchange = (e) => {
+            d.limit = Number(e.target.value) || 0;
+            saveState();
+            render();
+          };
+          td.appendChild(limInput);
+          tr.appendChild(td);
+          // util %
+          td = document.createElement('td');
+          const utilVal = d.limit > 0 ? ((d.balance / d.limit) * 100).toFixed(0) : '—';
+          td.textContent = d.limit > 0 ? `${utilVal}%` : '—';
+          td.className = 'small-text';
+          tr.appendChild(td);
+          // actions
+          td = document.createElement('td');
+          const removeBtn = document.createElement('button');
+          removeBtn.className = 'btn btn-danger';
+          removeBtn.textContent = 'Remove';
+          removeBtn.onclick = () => {
+            state.debts = state.debts.filter((x) => x.id !== d.id);
+            saveState();
+            render();
+          };
+          const zeroBtn = document.createElement('button');
+          zeroBtn.className = 'btn';
+          zeroBtn.textContent = 'Set 0';
+          zeroBtn.onclick = () => {
+            d.balance = 0;
+            saveState();
+            render();
+          };
+          const actionsDiv = document.createElement('div');
+          actionsDiv.className = 'actions';
+          actionsDiv.appendChild(removeBtn);
+          actionsDiv.appendChild(zeroBtn);
+          td.appendChild(actionsDiv);
+          tr.appendChild(td);
+          tbody.appendChild(tr);
+        });
+        // Overall util bar
+        document.getElementById('overallUtilValue').textContent = `${metrics.utilPct.toFixed(0)}%`;
+        document.getElementById('overallUtilProgress').style.width = `${Math.round(metrics.utilProgress * 100)}%`;
+        document.getElementById('overallUtilHint').textContent = `Balances ${formatCurrency(metrics.totalBalances)} / Limits ${formatCurrency(metrics.totalLimits)}`;
+        // Move‑Out values
+        document.getElementById('moveSavings').value = state.moveOut.savingsNow;
+        document.getElementById('moveTargetCost').value = state.moveOut.targetCost;
+        document.getElementById('moveTargetDate').value = state.moveOut.targetDateISO;
+        document.getElementById('moveProgress').style.width = `${Math.round(metrics.moveProgress * 100)}%`;
+        document.getElementById('moveHint').textContent = `${formatCurrency(state.moveOut.savingsNow)} / ${formatCurrency(state.moveOut.targetCost)}`;
+        // M2 values
+        document.getElementById('m2Saved').value = state.m2.savingsNow;
+        document.getElementById('m2Target').value = state.m2.targetDownPayment;
+        document.getElementById('m2Progress').style.width = `${Math.round(metrics.m2Progress * 100)}%`;
+        document.getElementById('m2Hint').textContent = `${formatCurrency(state.m2.savingsNow)} / ${formatCurrency(state.m2.targetDownPayment)}`;
+        // Exclude zero limit
+        document.getElementById('excludeZeroLimit').checked = state.treatChargeCardsAsZeroLimit;
+        // Payment logs
+        paymentsRender();
+      }
+      window.render = render;
+
+      // Bind UI events
+      function bindEvents() {
+        document.getElementById('addDebtBtn').onclick = () => {
+          const nextId = state.debts.length > 0 ? Math.max(...state.debts.map((d) => d.id)) + 1 : 1;
+          state.debts.push({ id: nextId, name: 'New Card', balance: 0, limit: 0, apr: 0 });
+          saveState();
+          render();
+        };
+        document.getElementById('excludeZeroLimit').onchange = (e) => {
+          state.treatChargeCardsAsZeroLimit = e.target.checked;
+          saveState();
+          render();
+        };
+        document.getElementById('moveSavings').onchange = (e) => {
+          state.moveOut.savingsNow = Number(e.target.value) || 0;
+          saveState();
+          render();
+        };
+        document.getElementById('moveTargetCost').onchange = (e) => {
+          state.moveOut.targetCost = Number(e.target.value) || 0;
+          saveState();
+          render();
+        };
+        document.getElementById('moveTargetDate').onchange = (e) => {
+          state.moveOut.targetDateISO = e.target.value;
+          saveState();
+          render();
+        };
+        document.getElementById('m2Saved').onchange = (e) => {
+          state.m2.savingsNow = Number(e.target.value) || 0;
+          saveState();
+          render();
+        };
+        document.getElementById('m2Target').onchange = (e) => {
+          state.m2.targetDownPayment = Number(e.target.value) || 0;
+          saveState();
+          render();
+        };
+        document.getElementById('downloadJsonBtn').onclick = () => {
+          const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'progress-data.json';
+          a.click();
+          URL.revokeObjectURL(url);
+        };
+        document.getElementById('copyJsonBtn').onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(JSON.stringify(state));
+            alert('Data copied to clipboard');
+          } catch { alert('Copy failed'); }
+        };
+        document.getElementById('generateShareBtn').onclick = () => {
+          const shareText = buildShareText();
+          document.getElementById('shareText').value = shareText;
+          document.getElementById('shareContainer').classList.remove('hidden');
+          setTimeout(() => {
+            document.getElementById('shareText').select();
+          }, 0);
+        };
+        document.getElementById('copyShareBtn').onclick = async () => {
+          const shareText = document.getElementById('shareText').value;
+          try {
+            await navigator.clipboard.writeText(shareText);
+            alert('Share text copied!');
+          } catch { alert('Copy failed'); }
+        };
+        document.getElementById('importJsonInput').onchange = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              try {
+                const data = JSON.parse(ev.target.result);
+                // Use the central state update function
+                applyLoadedState(data);
+              } catch { alert('Invalid JSON file'); }
+            };
+            reader.readAsText(file);
+          }
+        };
+        document.getElementById('resetBtn').onclick = () => {
+          if (confirm('Reset all data? This cannot be undone.')) {
+            // Use the central state update function
+            applyLoadedState(JSON.parse(JSON.stringify(DEFAULT_STATE)));
+          }
+        };
+        // Payment logs bind
+        document.getElementById('addDebtPaymentLogBtn').onclick = () => {
+          if (!Array.isArray(state.debtPayments)) state.debtPayments = [];
+          const nextId = state.debtPayments.reduce((m,p)=>Math.max(m, Number(p.id)||0), 0) + 1;
+          const nowISO = new Date().toISOString();
+          state.debtPayments.push({ id: nextId, createdAt: nowISO, accountId: '', amount: 0, date: '' });
+          saveState();
+          paymentsRender();
+        };
+        // Bind Supabase save/sync handlers
+        const saveBtn = document.getElementById('saveToCloudBtn');
+        const syncBtn = document.getElementById('syncFromCloudBtn');
+        if (saveBtn) saveBtn.onclick = () => { window.saveDataToCloud(); };
+        if (syncBtn) syncBtn.onclick = () => { window.syncDataFromCloud(); };
+      }
+
+      // Payment logs render
+      function paymentsRender() {
+        const body = document.getElementById('debtPaymentLogsBody');
+        if (!body || !state || !state.debtPayments) return;
+        body.innerHTML = '';
+        const rows = state.debtPayments.slice().sort((a,b) => {
+          const da=a.date||''; const db=b.date||'';
+          if (da && db && da !== db) return db.localeCompare(da);
+          const ca=a.createdAt||''; const cb=b.createdAt||'';
+          if (ca !== cb) return cb.localeCompare(ca);
+          return (Number(b.id||0)) - (Number(a.id||0));
+        });
+        rows.forEach((p) => {
+          const tr = document.createElement('tr');
+          const id = p.id;
+          // Account select
+          let td = document.createElement('td');
+          const sel = document.createElement('select');
+          const optBlank = document.createElement('option');
+          optBlank.value = '';
+          optBlank.textContent = '— Select —';
+          sel.appendChild(optBlank);
+          (state.debts || []).forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = String(d.id);
+            opt.textContent = d.name || ('Account ' + d.id);
+            sel.appendChild(opt);
+          });
+          sel.value = (p.accountId !== undefined && p.accountId !== null) ? String(p.accountId) : '';
+          sel.onchange = (e) => {
+            const idx = (state.debtPayments||[]).findIndex(x => String(x.id) === String(id));
+            if (idx >= 0) {
+              const val = e.target.value;
+              state.debtPayments[idx].accountId = val === '' ? '' : Number(val);
+              saveState();
+            }
+          };
+          td.appendChild(sel);
+          tr.appendChild(td);
+          // Amount
+          td = document.createElement('td');
+          const amt = document.createElement('input');
+          amt.type = 'number';
+          amt.step = '0.01';
+          amt.value = p.amount || 0;
+          amt.onchange = (e) => {
+            const idx = (state.debtPayments||[]).findIndex(x => String(x.id) === String(id));
+            if (idx >= 0) {
+              state.debtPayments[idx].amount = Number(e.target.value) || 0;
+              saveState();
+            }
+          };
+          td.appendChild(amt);
+          tr.appendChild(td);
+          // Date
+          td = document.createElement('td');
+          const date = document.createElement('input');
+          date.type = 'date';
+          date.value = p.date || '';
+          date.oninput = (e) => {
+            const idx = (state.debtPayments||[]).findIndex(x => String(x.id) === String(id));
+            if (idx >= 0) {
+              state.debtPayments[idx].date = e.target.value || '';
+              saveState();
+            }
+          };
+          date.onblur = () => { paymentsRender(); };
+          td.appendChild(date);
+          tr.appendChild(td);
+          // Remove
+          td = document.createElement('td');
+          const del = document.createElement('button');
+          del.className = 'btn btn-danger';
+          del.textContent = 'Remove';
+          del.onclick = () => {
+            const idx = (state.debtPayments||[]).findIndex(x => String(x.id) === String(id));
+            if (idx >= 0) {
+              state.debtPayments.splice(idx,1);
+              saveState();
+              paymentsRender();
+            }
+          };
+          td.appendChild(del);
+          tr.appendChild(td);
+          body.appendChild(tr);
+        });
+
+        const totalAmount = rows.reduce((sum, p) => {
+          const amt = Number(p.amount);
+          return sum + (isNaN(amt) ? 0 : amt);
+        }, 0);
+        const totalRow = document.createElement('tr');
+        totalRow.className = 'total-row';
+        let totalLabel = document.createElement('td');
+        totalLabel.textContent = 'Total';
+        totalLabel.style.fontWeight = 'bold';
+        totalRow.appendChild(totalLabel);
+        let totalValue = document.createElement('td');
+        totalValue.textContent = totalAmount.toFixed(2);
+        totalValue.style.fontWeight = 'bold';
+        totalRow.appendChild(totalValue);
+        let emptyDate = document.createElement('td');
+        emptyDate.textContent = '';
+        totalRow.appendChild(emptyDate);
+        let emptyRemove = document.createElement('td');
+        emptyRemove.textContent = '';
+        totalRow.appendChild(emptyRemove);
+        body.appendChild(totalRow);
+      }
+
+      // Initialization sequence: load local state, bind events, render
+      loadStateFromLocal(); // This now calls render internally
+      bindEvents();
+    })();
+  </script>
+  <!-- Supabase integration script -->
+  <script>
+    (function() {
+      // Fixed credentials for unlocking the app
+      const VALID_USERNAME = 'Nexu';
+      const VALID_PASSWORD = 'Admin936972$';
+
+      // Namespace for Supabase integration state
+      const NXU_SB = {};
+      window.__nxu = NXU_SB; // Expose for debugging
+
+      // --- Crypto Helpers ---
+      function b64FromBuf(buf) {
+        return btoa(String.fromCharCode(...new Uint8Array(buf)));
+      }
+      function bufFromB64(str) {
+        return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+      }
+      async function sha256Hex(str) {
+        const enc = new TextEncoder();
+        const buf = await crypto.subtle.digest('SHA-256', enc.encode(str));
+        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+      async function deriveKey(pass, salt) {
+        const enc = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey(
+          'raw', enc.encode(pass), { name: 'PBKDF2' }, false, ['deriveKey']
+        );
+        return crypto.subtle.deriveKey(
+          { name: 'PBKDF2', salt: salt, iterations: 100000, hash: 'SHA-256' },
+          keyMaterial,
+          { name: 'AES-GCM', length: 256 },
+          false,
+          ['encrypt', 'decrypt']
+        );
+      }
+      // Encrypt the state object using AES-GCM and return payload
+      async function encryptStatePayload(state, pass) {
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const key = await deriveKey(pass, salt);
+        const enc = new TextEncoder();
+        const plaintext = enc.encode(JSON.stringify(state));
+        const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintext);
+        return { v: 1, salt: b64FromBuf(salt), iv: b64FromBuf(iv), data: b64FromBuf(ct) };
+      }
+      // Decrypt payload back into state object
+      async function decryptStatePayload(payload, pass) {
+        const salt = bufFromB64(payload.salt);
+        const iv = bufFromB64(payload.iv);
+        const key = await deriveKey(pass, salt);
+        const data = bufFromB64(payload.data);
+        const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+        const dec = new TextDecoder();
+        return JSON.parse(dec.decode(pt));
+      }
+
+      // --- UI: Login Overlay ---
+      function ensureLoginOverlay() {
+        if (document.getElementById('loginOverlay')) return;
+        const overlay = document.createElement('div');
+        overlay.id = 'loginOverlay';
+        overlay.style.position = 'fixed';
+        overlay.style.inset = '0';
+        overlay.style.background = 'rgba(15,23,42,0.85)';
+        overlay.style.backdropFilter = 'blur(6px)';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.zIndex = '3000';
+        overlay.innerHTML = `
+          <div style="background:#0f172a;border:1px solid #334155;padding:20px;border-radius:10px;min-width:280px;color:#e2e8f0;text-align:center;">
+            <h3 style="margin-top:0;margin-bottom:8px;">Login</h3>
+            <input id="loginUsername" type="text" placeholder="Username" style="width:100%;margin:6px 0;padding:10px;border-radius:6px;border:1px solid #334155;background:#0b1220;color:#e2e8f0;" />
+            <input id="loginPassword" type="password" placeholder="Password" style="width:100%;margin:6px 0;padding:10px;border-radius:6px;border:1px solid #334155;background:#0b1220;color:#e2e8f0;" />
+            <div style="display:flex;justify-content:center;margin-top:12px;">
+              <button id="loginBtn" class="btn">Unlock</button>
+            </div>
+            <p id="loginError" style="color:#ef4444;font-size:12px;margin-top:8px;display:none;">Invalid credentials</p>
+          </div>`;
+        document.body.appendChild(overlay);
+        
+        const handleLogin = async () => {
+          const user = overlay.querySelector('#loginUsername').value.trim();
+          const pass = overlay.querySelector('#loginPassword').value;
+          if (user === VALID_USERNAME && pass === VALID_PASSWORD) {
+            NXU_SB.password = pass;
+            NXU_SB.userCodePromise = sha256Hex(user + ':' + pass);
+            overlay.style.display = 'none';
+            // Auto-sync on successful unlock
+            await window.syncDataFromCloud(true); // Pass true to suppress "no data" alert on first sync
+          } else {
+            const err = overlay.querySelector('#loginError');
+            err.style.display = 'block';
+          }
+        };
+
+        overlay.querySelector('#loginBtn').onclick = handleLogin;
+        overlay.querySelector('#loginPassword').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                handleLogin();
+            }
+        });
+      }
+
+      // --- Supabase Client & Config ---
+      const SUPABASE_URL = 'https://yaatlnnzxmtqfkqtukvt.supabase.co';
+      const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhYXRsbm56eG10cWZrcXR1a3Z0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwMTY2NjYsImV4cCI6MjA3MDU5MjY2Nn0.d0rJlMTFYiF4r2TONuEI5wXbgdeg2YqGdw6iyY6oWd4';
+      
+      // Expose for console diagnostics
+      NXU_SB.SUPABASE_URL = SUPABASE_URL;
+      NXU_SB.SUPABASE_ANON = SUPABASE_ANON;
+
+      function getSupabaseClient() {
+        if (!SUPABASE_URL || !SUPABASE_ANON || !window.supabase) {
+          console.warn('Supabase client library, URL, or anon key is missing.');
+          return null;
+        }
+        if (!NXU_SB.client) {
+          NXU_SB.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+        }
+        NXU_SB.hasClient = !!NXU_SB.client;
+        return NXU_SB.client;
+      }
+
+      async function updateCloudStatus() {
+        const statusEl = document.getElementById('cloudStatus');
+        if (!statusEl) return;
+        const supa = getSupabaseClient();
+        if (!supa) {
+          statusEl.textContent = 'Cloud: Not Configured';
+          statusEl.style.color = '#f87171';
+          return;
+        }
+        try {
+          // A HEAD request is lighter than a SELECT. We just want to check connectivity and auth.
+          const { error } = await supa.from('app_state_secure').select('user_code', { head: true, count: 'exact' });
+          if (error && error.code !== 'PGRST200') { // PGRST200 is OK for HEAD with zero rows
+             throw error;
+          }
+          statusEl.textContent = 'Cloud: Connected';
+          statusEl.style.color = '#4ade80';
+        } catch (err) {
+          console.error('Cloud status check failed:', err);
+          statusEl.textContent = `Cloud: Error (${err.code || err.message})`;
+          statusEl.style.color = '#f87171';
+        }
+      }
+
+      // --- Core Cloud Functions ---
+      window.saveDataToCloud = async function() {
+        if (!NXU_SB.password) {
+          // If the user hasn't unlocked, we can use the fallback password for saving.
+          NXU_SB.password = VALID_PASSWORD;
+          NXU_SB.userCodePromise = sha256Hex(VALID_USERNAME + ':' + VALID_PASSWORD);
+        }
+        const supa = getSupabaseClient();
+        if (!supa) {
+          alert('Supabase is not configured.');
+          return;
+        }
+        const userCode = await NXU_SB.userCodePromise;
+        try {
+          const payload = await encryptStatePayload(window.state, NXU_SB.password);
+          const { error } = await supa.from('app_state_secure').upsert({ user_code: userCode, payload: payload, updated_at: new Date().toISOString() });
+          if (error) throw error;
+          alert('Data saved to Cloud.');
+          updateCloudStatus();
+        } catch (e) {
+          console.error('Supabase save error', e);
+          alert('Save to cloud failed. Check console for details.');
+          updateCloudStatus();
+        }
+      };
+
+      window.syncDataFromCloud = async function(isAutoSync = false) {
+        if (!NXU_SB.password) {
+          ensureLoginOverlay();
+          if (!isAutoSync) alert('Please login before syncing data.');
+          return;
+        }
+        const supa = getSupabaseClient();
+        if (!supa) {
+          alert('Supabase is not configured.');
+          return;
+        }
+        const userCode = await NXU_SB.userCodePromise;
+        try {
+          const { data, error } = await supa.from('app_state_secure').select('payload').eq('user_code', userCode).maybeSingle();
+          if (error) throw error;
+          if (!data) {
+            if (!isAutoSync) alert('No cloud data found. Try saving first.');
+            return;
+          }
+          const newState = await decryptStatePayload(data.payload, NXU_SB.password);
+          
+          // *** FIX: Use the central state update function ***
+          if (window.applyLoadedState) {
+            window.applyLoadedState(newState);
+          } else {
+            console.error('applyLoadedState function not found. UI may not update correctly.');
+          }
+
+          if (!isAutoSync) alert('Data synced from Cloud.');
+          updateCloudStatus();
+        } catch (e) {
+          console.error('Supabase load error', e);
+          if (!isAutoSync) alert('Load from cloud failed. Check console for details.');
+          updateCloudStatus();
+        }
+      };
+      
+      // --- Diagnostics ---
+      window.nxuPing = updateCloudStatus;
+      window.nxuInfo = () => ({
+          url: NXU_SB.SUPABASE_URL,
+          keyPrefix: (NXU_SB.SUPABASE_ANON || '').substring(0, 8),
+          hasClient: !!NXU_SB.client,
+          hasPass: !!NXU_SB.password,
+      });
+
+      // --- Initialization ---
+      document.addEventListener('DOMContentLoaded', () => {
+        ensureLoginOverlay();
+        updateCloudStatus(); // Initial check
+        // Periodically check cloud status
+        setInterval(updateCloudStatus, 60000); 
+      });
+    })();
+  </script>
+</body>
+</html>
